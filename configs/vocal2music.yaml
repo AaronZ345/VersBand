@@ -88,7 +88,7 @@ lightning:
         vocoder_cfg:
           target: vocoder.hifigan.hifigan.HifiGAN
           params:
-            vocoder_ckpt: /root/autodl-tmp/SingingDictation/checkpoints/240421-hifigan-01
+            vocoder_ckpt: useful_ckpts/hifiga
   trainer:
     benchmark: True
     gradient_clip_val: 1.0
