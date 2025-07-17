@@ -88,7 +88,7 @@ lightning:
         vocoder_cfg:
           target: vocoder.hifigan.hifigan.HifiGAN
           params:
-            vocoder_ckpt: useful_ckpts/hifiga
+            vocoder_ckpt: useful_ckpts/hifigan
   trainer:
     benchmark: True
     gradient_clip_val: 1.0
