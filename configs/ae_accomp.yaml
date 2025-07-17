@@ -38,7 +38,7 @@ lightning:
         vocoder_cfg:
           target: vocoder.bigvgan.models.VocoderBigVGAN
           params:
-            ckpt_vocoder: useful_ckpts/hifiga
+            ckpt_vocoder: useful_ckpts/hifigan
   trainer:
     sync_batchnorm: false
     strategy: ddp
