@@ -51,12 +51,10 @@ export PYTHONPATH=.
 python preprocess/preprocess.py
 ```
 
-*Tip: You may also convert your dataset directly to a `.csv` instead of using `metadata.json`.*
-
 6. Compute mel-spectrograms:
 
 ```bash
-python preprocess/mel_spec_48k.py --tsv_path data/new/data.tsv --num_gpus 1 --max_duration 20
+python preprocess/mel_spec_24k.py --tsv_path ./data/music24k/music.tsv --num_gpus 4 --max_duration 20
 ```
 
 7. Post-process:
