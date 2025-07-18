@@ -40,7 +40,7 @@ You can specify which GPUs to use by setting the `CUDA_DEVICES_AVAILABLE` enviro
 
 ### Data Preparation 
 
-1. Crawl websites to build your own music datasets, then annotate them with automatic tools, like source–accompaniment separation, MIDI extraction, beat tracking, and music caption annotation.
+1. Crawl websites to build your own music datasets, then annotate them with automatic tools, like [source–accompaniment separation](https://github.com/Anjok07/ultimatevocalremovergui), [MIDI extraction](https://github.com/RickyL-2000/ROSVOT), [beat tracking](https://github.com/mjhydri/BeatNet), and [music caption annotation](https://github.com/seungheondoh/lp-music-caps).
 2. Prepare TSV files that include at least an item_name column, and adapt preprocess/preprocess.py to parse your custom file format accordingly.
 3. Preprocess the dataset:
 ```bash
@@ -60,7 +60,7 @@ python preprocess/mel_spec_24k.py --tsv_path ./data/music24k/music.tsv --num_gpu
 python preprocess/postprocess_data.py
 ```
 
-6. Download [HIFI-GAN]() as the vocoder in `useful_ckpts/hifigan` and [FLAN-T5](https://huggingface.co/google/flan-t5-large) in `useful_ckpts/flan-t5-large`.
+6. Download [HIFI-GAN](https://drive.google.com/drive/folders/19DHgcdDHl0WOLulTtpSHPg9h7B7m-b_B?usp=drive_link) as the vocoder in `useful_ckpts/hifigan` and [FLAN-T5](https://huggingface.co/google/flan-t5-large) in `useful_ckpts/flan-t5-large`.
 
 ### Training TCSinger 2
 
