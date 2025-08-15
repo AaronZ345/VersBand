@@ -5,9 +5,10 @@
 PyTorch implementation of AccompBand of **[VersBand](https://arxiv.org/abs/2504.19062): Versatile Framework for Song Generation with Prompt-based Control**.
 
 [![arXiv](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/2504.19062)
-[![GitHub Stars](https://img.shields.io/github/stars/AaronZ345/VersBand?style=social)](https://github.com/AaronZ345/VersBand)
+[![Demo](https://img.shields.io/badge/🚀%20Demo%20Page-blue)](https://aaronz345.github.io/VersBandDemo/) 
+[![GitHub Stars](https://img.shields.io/github/stars/AaronZ345/VersBand?style=social&label=GitHub+Stars)](https://github.com/AaronZ345/VersBand)
 
-Visit our [demo page](https://aaronz345.github.io/VersBandDemo/) for audio samples.
+Visit our [demo page](https://aaronz345.github.io/VersBandDemo/) for song samples.
 
 ## News
 
