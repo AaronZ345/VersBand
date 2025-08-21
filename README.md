@@ -66,7 +66,7 @@ python preprocess/postprocess_data.py
 
 6. Download [HIFI-GAN](https://drive.google.com/drive/folders/19DHgcdDHl0WOLulTtpSHPg9h7B7m-b_B?usp=drive_link) as the vocoder in `useful_ckpts/hifigan` and [FLAN-T5](https://huggingface.co/google/flan-t5-large) in `useful_ckpts/flan-t5-large`.
 
-### Training TCSinger 2
+### Training AccompBand
 
 1. Train the VAE module and duration predictor
 ```bash
