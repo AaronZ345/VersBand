@@ -24,7 +24,7 @@ Visit our [demo page](https://aaronz345.github.io/VersBandDemo/) for song sample
 - Experimental results demonstrate that VersBand achieves superior objective and subjective evaluations compared to baseline models across multiple **song generation** tasks.
 
 ## Quick Start
-Since VocalBand is similar to our other SVS models (like [TCSinger](https://github.com/AaronZ345/TCSinger), [TechSinger](https://github.com/gwx314/TechSinger)), we only provide the code of AccompBand in this repo. We give an example of how you can train your own model and infer with AccompBand.
+Since VocalBand is similar to our other SVS models (like [TCSinger](https://github.com/AaronZ345/TCSinger), [TechSinger](https://github.com/gwx314/TechSinger)), we only provide the code of **AccompBand** in this repo. We give an example of how you can train your own model and infer with AccompBand.
 
 To try on your own song dataset, clone this repo on your local machine with NVIDIA GPU + CUDA cuDNN and follow the instructions below.
 
