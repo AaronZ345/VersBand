@@ -21,6 +21,18 @@ model:
       down_layers:
       - 0
       dropout: 0.0
+    lossconfig:
+      target: ldm.modules.losses_audio.contperceptual.LPAPSWithDiscriminator
+      params:
+        disc_start: 80001
+        perceptual_weight: 0.0
+        kl_weight: 1.0e-06
+        disc_weight: 0.5
+        disc_in_channels: 1
+        disc_loss: mse
+        disc_factor: 2
+        disc_conditional: false
+        r1_reg_weight: 3
 
 lightning:
   callbacks:
@@ -61,3 +73,4 @@ data:
       target: ldm.data.joinaudiodataset_624.JoinSpecsValidation
       params:
         specs_dataset_cfg: null
+
