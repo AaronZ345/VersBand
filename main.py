@@ -24,7 +24,6 @@ import ldm.data.joinaudiodataset_anylen
 import ldm.data.joinaudiodataset_struct_sample_anylen
 import ldm.data.vocal2accomp_dataset
 import ldm.data.vocal2accomp_musical_dataset
-import ldm.data.vocal2accomp_musical_drop_dataset
 
 def get_parser(**parser_kwargs):
     def str2bool(v):
@@ -263,17 +262,6 @@ class DataModuleFromConfig(pl.LightningDataModule):# batchloader outputshape sho
                                 worker_init_fn=init_fn)
             print("train_loader_length", len(loader))
             return loader
-        elif isinstance(self.datasets["train"], ldm.data.vocal2accomp_musical_drop_dataset.JoinManifestSpecs):
-            from ldm.data.vocal2accomp_musical_drop_dataset import DDPIndexBatchSampler
-            dataset = self.datasets["train"]
-            main_indices = dataset.ordered_indices()
-            batch_sampler = DDPIndexBatchSampler(main_indices, batch_size=self.batch_size, shuffle=True,
-                                                 drop_last=True, max_tokens=self.datasets["train"].max_tokens)
-            loader = DataLoader(dataset, batch_sampler=batch_sampler, sampler=None,
-                                num_workers=self.num_workers, collate_fn=dataset.collater,
-                                worker_init_fn=init_fn)
-            print("train_loader_length", len(loader))
-            return loader
         else:
             return DataLoader(self.datasets["train"], batch_size=self.batch_size ,# sampler=DistributedSampler # np.arange(100),
                             num_workers=self.num_workers, shuffle=True,
@@ -306,14 +294,6 @@ class DataModuleFromConfig(pl.LightningDataModule):# batchloader outputshape sho
                               worker_init_fn=init_fn)
         elif isinstance(self.datasets["validation"],ldm.data.vocal2accomp_musical_dataset.JoinManifestSpecs):
             from ldm.data.vocal2accomp_musical_dataset import DDPIndexBatchSampler
-            dataset = self.datasets["validation"]
-            main_indices = dataset.ordered_indices()
-            batch_sampler = DDPIndexBatchSampler(main_indices, batch_size=self.batch_size, shuffle=shuffle, drop_last=True)
-            return DataLoader(dataset, batch_sampler=batch_sampler, sampler=None,
-                              num_workers=self.num_workers, collate_fn=dataset.collater,
-                              worker_init_fn=init_fn)
-        elif isinstance(self.datasets["validation"],ldm.data.vocal2accomp_musical_drop_dataset.JoinManifestSpecs):
-            from ldm.data.vocal2accomp_musical_drop_dataset import DDPIndexBatchSampler
             dataset = self.datasets["validation"]
             main_indices = dataset.ordered_indices()
             batch_sampler = DDPIndexBatchSampler(main_indices, batch_size=self.batch_size, shuffle=shuffle, drop_last=True)
@@ -905,3 +885,4 @@ if __name__ == "__main__":
             os.rename(logdir, dst)
         if trainer.global_rank == 0:
             print(trainer.profiler.summary())
+
