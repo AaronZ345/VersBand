@@ -23,6 +23,21 @@ logger = logging.getLogger(f'main.{__name__}')
 
 sys.path.insert(0, '.')  # nopep8
 
+def pad_or_cut_xd(tensor, length, dim=-1, pad_value=0):
+    """Resize one tensor dimension while preserving its dtype and device."""
+    if length < 0:
+        raise ValueError("length must be nonnegative")
+    if not -tensor.ndim <= dim < tensor.ndim:
+        raise IndexError("dimension is out of range")
+    dim %= tensor.ndim
+    current_length = tensor.shape[dim]
+    if current_length >= length:
+        return tensor.narrow(dim, 0, length)
+    shape = list(tensor.shape)
+    shape[dim] = length - current_length
+    return torch.cat((tensor, tensor.new_full(shape, pad_value)), dim=dim)
+
+
 class JoinManifestSpecs(torch.utils.data.Dataset):
     def __init__(self, split, spec_dir_path, mel_num=80,spec_crop_len=1248,mode='pad',pad_value=-5,drop=0,**kwargs):
         super().__init__()

@@ -95,6 +95,10 @@ def parse_args():
         type=int,
         default=24000
     )
+    parser.add_argument("--sample-limit", type=int, default=None,
+                        help="Optional positive limit on eligible input items; default: all.")
+    parser.add_argument("--sample-seed", type=int, default=0,
+                        help="Seed for selecting a subset when --sample-limit is used.")
     return parser.parse_args()
 
 def save_df_to_tsv(dataframe, path: Union[str, Path]):
@@ -194,7 +198,7 @@ def handle_exception(err, skipped_name=''):
 
 
 class InferDataset(Dataset):
-    def __init__(self, manifest_path,other_condition):
+    def __init__(self, manifest_path, other_condition, sample_limit=None, sample_seed=0):
         super().__init__()
         # Load all samples from the manifest
         samples = load_samples_from_tsv(manifest_path)
@@ -223,16 +227,19 @@ class InferDataset(Dataset):
 
         self.beats_dict = np.load(beats_path, allow_pickle=True).item()
 
-        # 随机选择项目名称
-        self.pred_list = random.sample(list(self.items_dict.keys()), 200)
+        self.pred_list = [name for name, item in self.items_dict.items()
+                          if float(item['duration']) <= 20]
+        if not self.pred_list:
+            raise ValueError("Manifest has no eligible items with duration <= 20 seconds")
+        if sample_limit is not None:
+            if sample_limit < 1:
+                raise ValueError("sample_limit must be positive")
+            self.pred_list = random.Random(sample_seed).sample(
+                self.pred_list, min(sample_limit, len(self.pred_list)))
 
         self.items = []
         for item_name in self.pred_list:
-            if item_name not in self.items_dict:
-                continue
             item = self.items_dict[item_name]
-            if float(item['duration']) > 20:
-                continue
             item['midi'] = self.midi_dict[item_name]
             item['beats'] = self.beats_dict[item_name]
             item['name'] = item_name
@@ -294,6 +301,7 @@ class InferDataset(Dataset):
         acoustic = np.load(data['vocal_mel_path'])[:20, :] # mel spec [80, T]
         org_spec_len = spec_len = spec.shape[1]
         midi = np.expand_dims(data['midi'], axis=0) # [1, T]
+        beats = np.expand_dims(data['beats'], axis=0) # [1, T]
 
         if abs(math.ceil(acoustic.shape[1] * self.unit_upsample_rate) - org_spec_len) > 5:  # some bad mel could exists
             print(f'corrupted: {data["vocal_mel_path"]}')
@@ -352,7 +360,7 @@ def gen_song(rank, args):
         init_process_group(backend=args.dist_config['dist_backend'], init_method=args.dist_config['dist_url'],
                            world_size=args.dist_config['world_size'] * args.num_gpus, rank=rank)
 
-    dataset = InferDataset(args.manifest_path,args.other_condition)
+    dataset = InferDataset(args.manifest_path, args.other_condition, args.sample_limit, args.sample_seed)
     ds_sampler = DistributedSampler(dataset, shuffle=False) if args.num_gpus > 1 else None
     loader = DataLoader(dataset, sampler=ds_sampler, collate_fn=dataset.collator, batch_size=1, num_workers=40, drop_last=False)
 
