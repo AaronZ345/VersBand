@@ -1,9 +1,9 @@
 <h1>Versatile Framework for Song Generation with Prompt-based Control<br>
-  <a href="https://2025.emnlp.org/"><img src="assets/readme/venue-mark.png" width="60" alt="" /><img src="assets/readme/link-venue.svg" alt="EMNLP 2025 Findings" /></a>
+  <a href="https://2025.emnlp.org/"><img src="assets/readme/link-venue.svg" alt="EMNLP 2025 Findings" /></a>
 </h1>
 
 <p>
-  <strong><a href="https://aaronz345.github.io/">Yu&nbsp;Zhang</a></strong>, Wenxiang&nbsp;Guo, Changhao&nbsp;Pan, Zhiyuan&nbsp;Zhu, Ruiqi&nbsp;Li, Jingyu&nbsp;Lu, Rongjie&nbsp;Huang, Ruiyuan&nbsp;Zhang, Zhiqing&nbsp;Hong, Ziyue&nbsp;Jiang, Zhou&nbsp;Zhao&nbsp;·&nbsp;<img src="https://www.zju.edu.cn/_upload/article/images/c3/98/1fb1d281492eb477a098ef7a2901/05966b26-ab45-470d-94c1-99b1e02d12f4.png" width="38" alt="" />&nbsp;<em>Zhejiang&nbsp;University</em>
+  <strong><a href="https://aaronz345.github.io/">Yu&nbsp;Zhang</a></strong>, Wenxiang&nbsp;Guo, Changhao&nbsp;Pan, Zhiyuan&nbsp;Zhu, Ruiqi&nbsp;Li, Jingyu&nbsp;Lu, Rongjie&nbsp;Huang, Ruiyuan&nbsp;Zhang, Zhiqing&nbsp;Hong, Ziyue&nbsp;Jiang, Zhou&nbsp;Zhao&ensp;<img src="assets/readme/affiliation-zju.svg" align="absmiddle" alt="Zhejiang University" />
 </p>
 
 <p>
@@ -22,7 +22,8 @@ Start with the [model assets](#model-assets) and [input format](#input-format), 
 
 ## ![](assets/readme/section-history.svg) News
 
-- **2025.08** · Released AccompBand code. VersBand was accepted to EMNLP 2025 Findings.
+- **2025.08** · Released AccompBand code.
+- **2025.08** · VersBand was accepted to EMNLP 2025 Findings.
 
 ## ![](assets/readme/section-quick-start.svg) Quick start
 
