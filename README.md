@@ -1,22 +1,30 @@
-# Versatile Framework for Song Generation with Prompt-based Control
+<h1>Versatile Framework for Song Generation with Prompt-based Control<br>
+  <a href="https://2025.emnlp.org/"><img src="assets/readme/venue-mark.png" width="60" alt="" /><img src="assets/readme/link-venue.svg" alt="EMNLP 2025 Findings" /></a>
+</h1>
 
-Yu Zhang, Wenxiang Guo, Changhao Pan, Zhiyuan Zhu, Ruiqi Li, Jingyu Lu, Rongjie Huang, Ruiyuan Zhang, Zhiqing Hong, Ziyue Jiang, Zhou Zhao\
-*Zhejiang University*
+<p>
+  <strong><a href="https://aaronz345.github.io/">Yu&nbsp;Zhang</a></strong>, Wenxiang&nbsp;Guo, Changhao&nbsp;Pan, Zhiyuan&nbsp;Zhu, Ruiqi&nbsp;Li, Jingyu&nbsp;Lu, Rongjie&nbsp;Huang, Ruiyuan&nbsp;Zhang, Zhiqing&nbsp;Hong, Ziyue&nbsp;Jiang, Zhou&nbsp;Zhao&nbsp;·&nbsp;<img src="https://www.zju.edu.cn/_upload/article/images/c3/98/1fb1d281492eb477a098ef7a2901/05966b26-ab45-470d-94c1-99b1e02d12f4.png" width="38" alt="" />&nbsp;<em>Zhejiang&nbsp;University</em>
+</p>
 
-[EMNLP 2025 Findings](https://2025.emnlp.org/)
+<p>
+  <a href="https://arxiv.org/abs/2504.19062"><img src="assets/readme/link-paper.svg" alt="Paper" /></a>
+  <a href="https://aaronz345.github.io/VersBandDemo/"><img src="assets/readme/link-demo.svg" alt="Demo Page" /></a>
+  <a href="https://mp.weixin.qq.com/s/fsbNdPyfEFi-_QHOCy85RQ"><img src="assets/readme/press-voice-home.svg" alt="语音之家" /></a>
+  <a href="https://mp.weixin.qq.com/s/tIwnbBXqVEwlUKRwxPceSA"><img src="assets/readme/press-paperweekly.svg" alt="PaperWeekly" /></a>
+  <a href="https://zhuanlan.zhihu.com/p/1943351555119097448"><img src="assets/readme/press-zhihu.svg" alt="知乎" /></a>
+</p>
 
-[![arXiv](https://img.shields.io/badge/arXiv-Paper-b31b1b.svg)](https://arxiv.org/abs/2504.19062)
-[![Demo](https://img.shields.io/badge/🚀%20Demo%20Page-blue)](https://aaronz345.github.io/VersBandDemo/)
-[![GitHub Stars](https://img.shields.io/github/stars/AaronZ345/VersBand?style=social&label=GitHub+Stars)](https://github.com/AaronZ345/VersBand)
-
-[![语音之家](https://img.shields.io/badge/-WeChat@语音之家-000000?logo=wechat&logoColor=07C160)](https://mp.weixin.qq.com/s/fsbNdPyfEFi-_QHOCy85RQ)
-[![PaperWeekly](https://img.shields.io/badge/-WeChat@PaperWeekly-000000?logo=wechat&logoColor=07C160)](https://mp.weixin.qq.com/s/tIwnbBXqVEwlUKRwxPceSA)
-[![知乎](https://img.shields.io/badge/-知乎-000000?logo=zhihu&logoColor=0084FF)](https://zhuanlan.zhihu.com/p/1943351555119097448)
-
-> **Start here** · [Quick start](#quick-start) · [Model assets](#model-assets)\
-> **Reference** · [Input format](#input-format) · [Training](docs/training.md) · [Citation](#citations)
+## ![](assets/readme/section-overview.svg) Overview
 
 VersBand combines vocal and accompaniment generation with prompt-based control. **This repository contains AccompBand**, the accompaniment model's preprocessing, training, and inference code. Prepare your trained model checkpoint before running generation.
+
+Start with the [model assets](#model-assets) and [input format](#input-format), then follow [Quick start](#quick-start) or the [AccompBand training guide](docs/training.md). To cite this work, use the [BibTeX entry](#citations).
+
+## ![](assets/readme/section-history.svg) News
+
+- **2025.08** · Released AccompBand code. VersBand was accepted to EMNLP 2025 Findings.
+
+## ![](assets/readme/section-quick-start.svg) Quick start
 
 | Implementation | Requirements |
 | --- | --- |
@@ -24,8 +32,6 @@ VersBand combines vocal and accompaniment generation with prompt-based control. 
 | Conditioning | Vocal features, MIDI, beats, and text prompts |
 | Output | 24 kHz accompaniment and mixed-song WAV files |
 | Runtime | Python 3.10, PyTorch 2.1.0 + CUDA 12.1 |
-
-## Quick start
 
 ### 1. Install the environment
 
@@ -55,7 +61,7 @@ PYTHONPATH=. CUDA_VISIBLE_DEVICES=0 python scripts/test_final.py \
 
 The matching beat file is resolved by replacing `midi` with `beats` in the condition path. Use a path pair such as `midi.npy` and `beats.npy`, and keep all item keys aligned. The script writes generated accompaniment, mixed-song, and reference WAV files, plus a `clap.csv` index under `--save_dir`. Guidance scales are controlled by `--scales`.
 
-## Model assets
+## ![](assets/readme/section-dataset.svg) Model assets
 
 | Asset | Preparation |
 | --- | --- |
@@ -64,24 +70,23 @@ The matching beat file is resolved by replacing `midi` with `beats` in the condi
 | HIFI-GAN | [Download](https://drive.google.com/drive/folders/19DHgcdDHl0WOLulTtpSHPg9h7B7m-b_B?usp=drive_link) to `useful_ckpts/hifigan`; set the inference vocoder path |
 | FLAN-T5 | [Hugging Face](https://huggingface.co/google/flan-t5-large) to `useful_ckpts/flan-t5-large` |
 
-## Input format
+## ![](assets/readme/section-preprocessing.svg) Input format
 
 The inference manifest uses `name`, `audio_path`, `mel_path`, `vocal_mel_path`, `duration`, `caption`, and musical metadata such as key, tempo, and emotion. MIDI and beat files map these item names to aligned condition arrays. See [scripts/test_final.py](scripts/test_final.py) and the [training guide](docs/training.md) for the complete field usage.
 
 Inference processes every eligible row (duration up to 20 seconds), including single-row manifests and repeated names. Use `--sample-limit 10 --sample-seed 0` for a reproducible subset; the seed controls row selection. Multi-GPU inference uses disjoint rows and per-rank CSVs, then combines `clap.csv` in source `manifest_index` order. Beat/MIDI padding uses the training sentinels 2/128.
 
-## Method and training
+## ![](assets/readme/section-method.svg) Method and training
 
 The full VersBand framework includes VocalBand for vocal synthesis and AccompBand for accompaniment. AccompBand uses a flow-based transformer and Band-MOE for accompaniment quality, alignment, and control. The [paper](https://arxiv.org/abs/2504.19062) describes both models and the song-generation comparisons; this repository releases the AccompBand implementation.
 
-<details>
-<summary>Release history</summary>
+<p align="center">
+  <img src="assets/readme/figure-2-architecture.png" width="100%" alt="The full VersBand architecture, with separate VocalBand and AccompBand models." />
+  <br>
+  <sub><a href="https://arxiv.org/html/2504.19062v5#S3.F2">Figure 2</a>. The full VersBand framework. This repository provides AccompBand, shown in panel (c).</sub>
+</p>
 
-- August 2025: released AccompBand code; VersBand accepted to EMNLP 2025 Findings.
-
-</details>
-
-## Acknowledgements
+## ![](assets/readme/section-acknowledgements.svg) Acknowledgements
 
 This implementation uses parts of the code from the following Github repos:
 [Make-An-Audio-3](https://github.com/Text-to-Audio/Make-An-Audio-3),
@@ -89,7 +94,7 @@ This implementation uses parts of the code from the following Github repos:
 [Lumina-T2X](https://github.com/Alpha-VLLM/Lumina-T2X)
 as described in our code.
 
-## Citations ##
+## ![](assets/readme/section-citations.svg) Citations
 
 If you find this code useful in your research, please cite our work:
 ```bib
@@ -101,7 +106,7 @@ If you find this code useful in your research, please cite our work:
 }
 ```
 
-## Disclaimer ##
+## ![](assets/readme/section-disclaimer.svg) Disclaimer
 
 Any organization or individual is prohibited from using any technology mentioned in this paper to generate someone's songs without his/her consent, including but not limited to government leaders, political figures, and celebrities. If you do not comply with this item, you could be in violation of copyright laws.
 
