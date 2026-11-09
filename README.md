@@ -64,7 +64,7 @@ python preprocess/mel_spec_24k.py --tsv_path ./data/music24k/music.tsv --num_gpu
 5. Post-process:
 
 ```bash
-python preprocess/postprocess_data.py
+python preprocess/postprocess.py
 ```
 
 6. Download [HIFI-GAN](https://drive.google.com/drive/folders/19DHgcdDHl0WOLulTtpSHPg9h7B7m-b_B?usp=drive_link) as the vocoder in `useful_ckpts/hifigan` and [FLAN-T5](https://huggingface.co/google/flan-t5-large) in `useful_ckpts/flan-t5-large`.
@@ -93,6 +93,10 @@ python scripts/test_final.py
 ```
 
 *Replace the checkpoint path and CFG coefficient as required.*
+
+Inference processes every eligible manifest row (duration up to 20 seconds) by default, including a single row and repeated item names. To select a reproducible subset, pass `--sample-limit 10 --sample-seed 0`; a limit above the available row count selects all eligible rows. The seed controls subset selection, not waveform generation.
+
+Multiple GPUs receive disjoint rows without padding the dataset. Each rank writes its own CSV; after all ranks finish, `clap.csv` combines their results in original manifest order. The `manifest_index` column identifies the source row.
 
 
 ## Acknowledgements

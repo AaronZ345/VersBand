@@ -13,7 +13,7 @@ from omegaconf import OmegaConf
 import soundfile
 from tqdm import tqdm
 from torch.distributed import init_process_group
-from torch.utils.data import Dataset, DataLoader, DistributedSampler
+from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 from tqdm.contrib.concurrent import process_map
 import soundfile as sf
@@ -95,6 +95,10 @@ def parse_args():
         type=int,
         default=24000
     )
+    parser.add_argument("--sample-limit", type=int, default=None,
+                        help="Optional positive limit on eligible input items; default: all.")
+    parser.add_argument("--sample-seed", type=int, default=0,
+                        help="Seed for selecting a subset when --sample-limit is used.")
     return parser.parse_args()
 
 def save_df_to_tsv(dataframe, path: Union[str, Path]):
@@ -108,6 +112,16 @@ def save_df_to_tsv(dataframe, path: Union[str, Path]):
         escapechar="\\",
         quoting=csv.QUOTE_NONE,
     )
+
+def merge_rank_manifests(save_dir, num_ranks):
+    frames = [pd.read_csv(
+        os.path.join(save_dir, f"clap.rank-{rank}.csv"), sep="\t",
+        quoting=csv.QUOTE_NONE, escapechar="\\", keep_default_na=False,
+        dtype={"manifest_index": int, "name": str, "caption": str, "audio_path": str},
+    ) for rank in range(num_ranks)]
+    combined = pd.concat(frames, ignore_index=True).sort_values("manifest_index", kind="stable")
+    save_df_to_tsv(combined, os.path.join(save_dir, "clap.csv"))
+
 
 def safe_path(path):
     os.makedirs(Path(path).parent, exist_ok=True)
@@ -194,13 +208,11 @@ def handle_exception(err, skipped_name=''):
 
 
 class InferDataset(Dataset):
-    def __init__(self, manifest_path,other_condition):
+    def __init__(self, manifest_path, other_condition, sample_limit=None, sample_seed=0):
         super().__init__()
         # Load all samples from the manifest
         samples = load_samples_from_tsv(manifest_path)
 
-        # Create a dictionary mapping from 'name' to sample data for quick lookup
-        self.items_dict = {sample['name']: sample for sample in samples}
 
         self.caption_generator = CaptionGenerator2()
 
@@ -223,22 +235,20 @@ class InferDataset(Dataset):
 
         self.beats_dict = np.load(beats_path, allow_pickle=True).item()
 
-        # 随机选择项目名称
-        self.pred_list = random.sample(list(self.items_dict.keys()), 200)
-
-        self.items = []
-        for item_name in self.pred_list:
-            if item_name not in self.items_dict:
-                continue
-            item = self.items_dict[item_name]
-            if float(item['duration']) > 20:
-                continue
+        self.items = [dict(sample, manifest_index=index)
+                      for index, sample in enumerate(samples) if float(sample['duration']) <= 20]
+        if not self.items:
+            raise ValueError("Manifest has no eligible items with duration <= 20 seconds")
+        if sample_limit is not None:
+            if sample_limit < 1:
+                raise ValueError("sample_limit must be positive")
+            self.items = random.Random(sample_seed).sample(
+                self.items, min(sample_limit, len(self.items)))
+        self.pred_list = [item['name'] for item in self.items]
+        for item in self.items:
+            item_name = item['name']
             item['midi'] = self.midi_dict[item_name]
             item['beats'] = self.beats_dict[item_name]
-            item['name'] = item_name
-            self.items.append(item)
-
-        del self.items_dict
         del self.midi_dict
         del self.beats_dict
 
@@ -294,6 +304,7 @@ class InferDataset(Dataset):
         acoustic = np.load(data['vocal_mel_path'])[:20, :] # mel spec [80, T]
         org_spec_len = spec_len = spec.shape[1]
         midi = np.expand_dims(data['midi'], axis=0) # [1, T]
+        beats = np.expand_dims(data['beats'], axis=0) # [1, T]
 
         if abs(math.ceil(acoustic.shape[1] * self.unit_upsample_rate) - org_spec_len) > 5:  # some bad mel could exists
             print(f'corrupted: {data["vocal_mel_path"]}')
@@ -318,8 +329,8 @@ class InferDataset(Dataset):
 
         acoustic_len = int(math.ceil(acoustic_len / self.unit_frames_multiple) * self.unit_frames_multiple)
         acoustic = pad_or_cut_xd(torch.FloatTensor(acoustic), acoustic_len, dim=1, pad_value=self.pad_value)
-        midi = pad_or_cut_xd(torch.FloatTensor(midi), acoustic_len, dim=1, pad_value=0)
-        beats = pad_or_cut_xd(torch.FloatTensor(beats), acoustic_len, dim=1, pad_value=0)
+        midi = pad_or_cut_xd(torch.FloatTensor(midi), acoustic_len, dim=1, pad_value=128)
+        beats = pad_or_cut_xd(torch.FloatTensor(beats), acoustic_len, dim=1, pad_value=2)
 
         spec_len = math.ceil(acoustic_len * self.unit_upsample_rate)
         spec = pad_or_cut_xd(torch.FloatTensor(spec), spec_len, dim=1, pad_value=self.pad_value)
@@ -330,6 +341,7 @@ class InferDataset(Dataset):
         item['ori_caption'] = ori_caption
         item["caption"] = caption
         item['name'] = data['name']
+        item['manifest_index'] = data['manifest_index']
         item['midi']=midi
         item['beats']=beats
         
@@ -352,8 +364,12 @@ def gen_song(rank, args):
         init_process_group(backend=args.dist_config['dist_backend'], init_method=args.dist_config['dist_url'],
                            world_size=args.dist_config['world_size'] * args.num_gpus, rank=rank)
 
-    dataset = InferDataset(args.manifest_path,args.other_condition)
-    ds_sampler = DistributedSampler(dataset, shuffle=False) if args.num_gpus > 1 else None
+    dataset = InferDataset(args.manifest_path, args.other_condition, args.sample_limit, args.sample_seed)
+    ds_sampler = range(rank, len(dataset), args.num_gpus) if args.num_gpus > 1 else None
+    if ds_sampler is not None and len(ds_sampler) == 0:
+        empty = pd.DataFrame(columns=["audio_path", "caption", "name", "manifest_index"])
+        save_df_to_tsv(empty, safe_path(os.path.join(args.save_dir, f"clap.rank-{rank}.csv")))
+        return
     loader = DataLoader(dataset, sampler=ds_sampler, collate_fn=dataset.collator, batch_size=1, num_workers=40, drop_last=False)
 
     device = torch.device(f"cuda:{int(rank)}")
@@ -366,6 +382,7 @@ def gen_song(rank, args):
         scales = [args.scale]
 
     save_dir = args.save_dir
+    os.makedirs(save_dir, exist_ok=True)
     loader = tqdm(loader) if rank == 0 else loader
     item_idx = 0
     results = []
@@ -373,6 +390,7 @@ def gen_song(rank, args):
     csv_data['audio_path']=[]
     csv_data['caption']=[]
     csv_data['name']=[]
+    csv_data['manifest_index']=[]
     for batch in loader:
         item = batch[0]
         item_name = item['name']
@@ -441,6 +459,7 @@ def gen_song(rank, args):
                 csv_data['audio_path'].append(cond_gtcodec_accomp_path)  # 音频路径
                 csv_data['caption'].append(caption)                       # 对应的 caption
                 csv_data['name'].append(item_name)                        # 对应的 item_name
+                csv_data['manifest_index'].append(item['manifest_index'])
                 
                 gt_vocal_path = os.path.join(cond_gtcodec_accomp_dir, f"{rank}-{item_idx:04d}[{wav_idx}][gt_vocal].wav")
                 gt_vocal = normalize_loudness(gt_vocal, -23)
@@ -459,7 +478,8 @@ def gen_song(rank, args):
         results.append(item)
         item_idx += 1
     # 保存CSV文件
-    csv_save_path = os.path.join(save_dir, 'clap.csv')
+    csv_name = f'clap.rank-{rank}.csv' if args.num_gpus > 1 else 'clap.csv'
+    csv_save_path = os.path.join(save_dir, csv_name)
     save_df_to_tsv(pd.DataFrame.from_dict(csv_data),  csv_save_path)
 
     print(f"CSV 文件保存至: {csv_save_path}")
@@ -473,5 +493,6 @@ if __name__ == '__main__':
     }
     if args.num_gpus > 1:
         mp.spawn(gen_song, nprocs=args.num_gpus, args=(args,))
+        merge_rank_manifests(args.save_dir, args.num_gpus)
     else:
         gen_song(0, args=args)
