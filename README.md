@@ -94,7 +94,9 @@ python scripts/test_final.py
 
 *Replace the checkpoint path and CFG coefficient as required.*
 
-Inference processes every eligible manifest item (duration up to 20 seconds) in manifest order by default, including a single item. To select a reproducible subset, pass `--sample-limit 10 --sample-seed 0`; a limit above the available item count selects all eligible items. The seed controls subset selection, not waveform generation.
+Inference processes every eligible manifest row (duration up to 20 seconds) by default, including a single row and repeated item names. To select a reproducible subset, pass `--sample-limit 10 --sample-seed 0`; a limit above the available row count selects all eligible rows. The seed controls subset selection, not waveform generation.
+
+Multiple GPUs receive disjoint rows without padding the dataset. Each rank writes its own CSV; after all ranks finish, `clap.csv` combines their results in original manifest order. The `manifest_index` column identifies the source row.
 
 
 ## Acknowledgements
